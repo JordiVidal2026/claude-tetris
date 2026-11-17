@@ -14,6 +14,7 @@ const COLORS = [
   '#90caf9', // J - azul pálido
   '#ffb74d', // L - orange
   '#b0bec5', // N - tuerca (gris metálico)
+  '#ff7043', // B - bomba (naranja rojizo)
 ];
 
 const PIECES = [
@@ -26,9 +27,13 @@ const PIECES = [
   [[6,0,0],[6,6,6],[0,0,0]],                  // J
   [[0,0,7],[7,7,7],[0,0,0]],                  // L
   [[8,8,8],[8,0,8],[8,8,8]],                  // N - tuerca (hueco central)
+  [[9,9,9],[9,9,9],[9,9,9]],                  // B - bomba (especial)
 ];
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
+
+const BOMB = 9;           // índice de la pieza bomba en PIECES/COLORS
+const BOMB_CHANCE = 0.05; // probabilidad de que la siguiente pieza sea una bomba
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -52,7 +57,9 @@ function createBoard() {
 }
 
 function randomPiece() {
-  const type = Math.floor(Math.random() * (PIECES.length - 1)) + 1;
+  const type = Math.random() < BOMB_CHANCE
+    ? BOMB
+    : Math.floor(Math.random() * (BOMB - 1)) + 1; // 1..8 (incluye la tuerca)
   const shape = PIECES[type].map(row => [...row]);
   return { type, shape, x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2), y: 0 };
 }
@@ -140,9 +147,20 @@ function softDrop() {
   }
 }
 
+// La bomba no se fusiona con el tablero: desaparece y destruye el 3×3 que tiene justo debajo.
+function explode() {
+  for (let r = current.y + 3; r <= current.y + 5; r++)
+    for (let c = current.x; c <= current.x + 2; c++)
+      if (r >= 0 && r < ROWS && c >= 0 && c < COLS) board[r][c] = 0;
+}
+
 function lockPiece() {
-  merge();
-  clearLines();
+  if (current.type === BOMB) {
+    explode();
+  } else {
+    merge();
+    clearLines();
+  }
   spawn();
 }
 
@@ -172,6 +190,41 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.fillStyle = 'rgba(255,255,255,0.12)';
   context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
   context.globalAlpha = 1;
+}
+
+// Dibuja el símbolo de una bomba sobre un cuadrado 3×3 cuya celda superior izquierda es (x, y).
+function drawBombSymbol(context, x, y, size) {
+  const cx = (x + 1.5) * size;
+  const cy = (y + 1.6) * size;
+  const radius = size * 0.9;
+
+  // cuerpo
+  context.fillStyle = '#212121';
+  context.beginPath();
+  context.arc(cx, cy, radius, 0, Math.PI * 2);
+  context.fill();
+
+  // brillo
+  context.fillStyle = 'rgba(255,255,255,0.35)';
+  context.beginPath();
+  context.arc(cx - radius * 0.35, cy - radius * 0.35, radius * 0.22, 0, Math.PI * 2);
+  context.fill();
+
+  // mecha
+  const fx = cx + radius * 0.55;
+  const fy = cy - radius * 0.85;
+  context.strokeStyle = '#8d6e63';
+  context.lineWidth = Math.max(2, size * 0.09);
+  context.beginPath();
+  context.moveTo(cx + radius * 0.3, cy - radius * 0.85);
+  context.quadraticCurveTo(cx + radius * 0.5, cy - radius * 1.25, fx + radius * 0.2, fy - radius * 0.45);
+  context.stroke();
+
+  // chispa
+  context.fillStyle = '#ffeb3b';
+  context.beginPath();
+  context.arc(fx + radius * 0.2, fy - radius * 0.45, size * 0.12, 0, Math.PI * 2);
+  context.fill();
 }
 
 function loadTheme() {
@@ -235,6 +288,8 @@ function draw() {
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
       drawBlock(ctx, current.x + c, current.y + r, current.shape[r][c], BLOCK);
+
+  if (current.type === BOMB) drawBombSymbol(ctx, current.x, current.y, BLOCK);
 }
 
 function drawNext() {
@@ -246,6 +301,7 @@ function drawNext() {
   for (let r = 0; r < shape.length; r++)
     for (let c = 0; c < shape[r].length; c++)
       drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB);
+  if (next.type === BOMB) drawBombSymbol(nextCtx, offX, offY, NB);
 }
 
 function endGame() {

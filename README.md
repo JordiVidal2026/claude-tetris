@@ -35,6 +35,7 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 
 - Tablero de **10 × 20** celdas.
 - Las **7 piezas estándar** (I, O, T, S, Z, J, L) con colores diferenciados, más una **pieza reto**: la **Tuerca**, de 3 × 3 con el hueco central vacío.
+- Una **pieza especial**: la **Bomba** (3 × 3 con el símbolo de una bomba, aparece ~5 % de las veces). Al aterrizar desaparece y destruye el área de 3 × 3 bloques que tiene justo debajo; los bloques de encima no caen.
 - **Rotación** con _wall kicks_ básicos (pequeños desplazamientos para que la pieza pueda rotar pegada a la pared).
 - **Soft drop** (bajada acelerada) y **hard drop** (caída instantánea).
 - **Pieza fantasma** (_ghost piece_): muestra dónde aterrizará la pieza actual.
@@ -173,7 +174,9 @@ Algunos parámetros fáciles de tunear en `game.js`:
 | `COLS`         | Columnas del tablero                     | `10`                  |
 | `ROWS`         | Filas del tablero                        | `20`                  |
 | `BLOCK`        | Tamaño en píxeles de cada celda          | `30`                  |
-| `COLORS`       | Paleta de colores por tipo de pieza      | 8 colores             |
+| `COLORS`       | Paleta de colores por tipo de pieza      | 9 colores             |
+| `BOMB`         | Índice de la pieza bomba                 | `9`                   |
+| `BOMB_CHANCE`  | Probabilidad de que salga una bomba      | `0.05`                |
 | `LINE_SCORES`  | Puntos por 1, 2, 3 o 4 líneas eliminadas | `[0,100,300,500,800]` |
 | `dropInterval` | Velocidad inicial de caída en ms         | `1000`                |
 
