@@ -148,6 +148,7 @@ function spawn() {
   current = next;
   next = randomPiece();
   if (collide(current.shape, current.x, current.y)) {
+    current = null; // la ficha nueva no cabe: no se dibuja encima del tablero
     endGame();
   }
   drawNext();
@@ -186,7 +187,7 @@ function applyTheme(theme) {
   const isLight = theme === 'light';
   themeToggle.textContent = isLight ? 'Modo oscuro' : 'Modo claro';
   themeToggle.setAttribute('aria-pressed', String(isLight));
-  if (board && current) {
+  if (board && next) {
     draw();
     drawNext();
   }
@@ -218,6 +219,9 @@ function draw() {
     for (let c = 0; c < COLS; c++)
       drawBlock(ctx, c, r, board[r][c], BLOCK);
 
+  // tras el game over no hay ficha activa
+  if (!current) return;
+
   // ghost
   const gy = ghostY();
   for (let r = 0; r < current.shape.length; r++)
@@ -245,6 +249,7 @@ function drawNext() {
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
+  draw(); // último frame: muestra el tablero con la última ficha ya fijada
   overlayTitle.textContent = 'GAME OVER';
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
   overlay.classList.remove('hidden');
